@@ -1,232 +1,99 @@
-let scene, camera, renderer;
-const canvas = document.getElementById("threeCanvas");
-
-// Initialize Three.js Scene
-function initThree() {
-  scene = new THREE.Scene();
-  camera = new THREE.PerspectiveCamera(
-    75,
-    canvas.clientWidth / canvas.clientHeight,
-    0.1,
-    1000
-  );
-  renderer = new THREE.WebGLRenderer({ canvas });
-  renderer.setSize(canvas.clientWidth, canvas.clientHeight);
-  camera.position.set(0, 20, 20);
-  camera.lookAt(0, 0, 0);
-
-  const light = new THREE.DirectionalLight(0xffffff, 1);
-  light.position.set(10, 10, 10);
-  scene.add(light);
-
-  animate();
-}
-
-function animate() {
-  requestAnimationFrame(animate);
-  renderer.render(scene, camera);
-}
-
-initThree();
-
-// Handle 2D Image Upload and Process with OpenCV
-document.getElementById("imageUpload").addEventListener("change", function (e) {
-  const file = e.target.files[0];
-  if (!file) return;
-  const reader = new FileReader();
-  reader.onload = function (event) {
-    const img = new Image();
-    img.onload = function () {
-      processImage(img);
-    };
-    img.src = event.target.result;
-  };
-  reader.readAsDataURL(file);
-});
-
-function processImage(img) {
-  const canvasInput = document.getElementById("inputCanvas");
-  const ctx = canvasInput.getContext("2d");
-  canvasInput.width = img.width;
-  canvasInput.height = img.height;
-  ctx.drawImage(img, 0, 0);
-
-  // Clear previous walls
-  clearWalls();
-
-  // Wait for OpenCV to load
-  cv["onRuntimeInitialized"] = () => {
-    let src = cv.imread("inputCanvas");
-    let dst = new cv.Mat();
-    cv.cvtColor(src, src, cv.COLOR_RGBA2GRAY, 0);
-    cv.Canny(src, dst, 50, 150, 3, false);
-    let lines = new cv.Mat();
-    cv.HoughLinesP(dst, lines, 1, Math.PI / 180, 50, 50, 10);
-
-    for (let i = 0; i < lines.rows; ++i) {
-      let line = lines.data32S.subarray(i * 4, i * 4 + 4);
-      let x1 = line[0];
-      let y1 = line[1];
-      let x2 = line[2];
-      let y2 = line[3];
-      createWall3D(x1, y1, x2, y2, img.height);
-    }
-
-    src.delete();
-    dst.delete();
-    lines.delete();
-  };
-}
-
-let wallMeshes = [];
-function clearWalls() {
-  wallMeshes.forEach((wall) => scene.remove(wall));
-  wallMeshes = [];
-}
-
-function createWall3D(x1, y1, x2, y2, imgHeight) {
-  // Flip Y because canvas y=0 is top but Three.js z=0 is center
-  const scale = 0.05; // adjust scale for better fitting
-  const xMid = ((x1 + x2) / 2) * scale;
-  const zMid = ((imgHeight - y1 + imgHeight - y2) / 2) * scale;
-  const dx = x2 - x1;
-  const dz = y2 - y1;
-  const length = Math.sqrt(dx * dx + dz * dz) * scale;
-
-  const angle = Math.atan2(dz, dx);
-
-  const wallGeometry = new THREE.BoxGeometry(length, 2, 0.2);
-  const wallMaterial = new THREE.MeshStandardMaterial({ color: 0x808080 });
-  const wall = new THREE.Mesh(wallGeometry, wallMaterial);
-  wall.position.set(xMid, 1, zMid);
-  wall.rotation.y = -angle;
-
-  scene.add(wall);
-  wallMeshes.push(wall);
-}
-
-// Invoice Code
+let table = document.getElementById("invoiceTable");
+let totalSpan = document.getElementById("total");
+let gstSpan = document.getElementById("gst");
+let finalSpan = document.getElementById("final");
 
 function addRow() {
-  const tbody = document.getElementById("invoiceBody");
-  const rowCount = tbody.rows.length + 1;
-  const row = tbody.insertRow();
-  row.innerHTML = `
-    <td>${rowCount}</td>
-    <td><input type="text"></td>
-    <td><input type="text"></td>
-    <td><input type="number" class="price"></td>
-  `;
+    let row = table.insertRow();
+    row.insertCell(0).innerHTML = '<input type="text">';
+    row.insertCell(1).innerHTML = '<input type="text">';
+    row.insertCell(2).innerHTML = '<input type="number" value="1" oninput="calculate()">';
+    row.insertCell(3).innerHTML = '<input type="number" value="0" oninput="calculate()">';
 }
 
-function calculateTotal() {
-  let total = 0;
-  document.querySelectorAll(".price").forEach((input) => {
-    total += parseFloat(input.value) || 0;
-  });
-  const gst = total * 0.18;
-  const final = total + gst;
-
-  document.getElementById("totalAmount").textContent = total.toFixed(2);
-  document.getElementById("gstAmount").textContent = gst.toFixed(2);
-  document.getElementById("finalAmount").textContent = final.toFixed(2);
+function calculate() {
+    let total = 0;
+    for (let i = 1; i < table.rows.length; i++) {
+        let amount = parseFloat(table.rows[i].cells[3].children[0].value) || 0;
+        total += amount;
+    }
+    let gst = total * 0.18;
+    let final = total + gst;
+    totalSpan.innerText = total.toFixed(2);
+    gstSpan.innerText = gst.toFixed(2);
+    finalSpan.innerText = final.toFixed(2);
 }
 
-// Load invoice from JSON file
-function loadInvoice(input) {
-  const reader = new FileReader();
-  reader.onload = function (e) {
-    const data = JSON.parse(e.target.result);
-    const tbody = document.getElementById("invoiceBody");
-    tbody.innerHTML = "";
-    data.forEach((item, i) => {
-      const row = tbody.insertRow();
-      row.innerHTML = `
-        <td>${i + 1}</td>
-        <td><input type="text" value="${item.name}"></td>
-        <td><input type="text" value="${item.material}"></td>
-        <td><input type="number" class="price" value="${item.price}"></td>
-      `;
+function generateInvoice() {
+    let items = [];
+    for (let i = 1; i < table.rows.length; i++) {
+        items.push({
+            name: table.rows[i].cells[0].children[0].value,
+            material: table.rows[i].cells[1].children[0].value,
+            qty: table.rows[i].cells[2].children[0].value,
+            amount: table.rows[i].cells[3].children[0].value
+        });
+    }
+    fetch('/generate_invoice', {
+        method: 'POST',
+        headers: {'Content-Type':'application/json'},
+        body: JSON.stringify({
+            items: items,
+            total: parseFloat(totalSpan.innerText),
+            gst: parseFloat(gstSpan.innerText),
+            final: parseFloat(finalSpan.innerText)
+        })
+    }).then(response => response.blob())
+    .then(blob => {
+        let url = window.URL.createObjectURL(blob);
+        let a = document.createElement('a');
+        a.href = url;
+        a.download = "invoice.pdf";
+        a.click();
     });
-    calculateTotal();
-  };
-  reader.readAsText(input.files[0]);
 }
 
-// Download invoice JSON file
-function downloadInvoice() {
-  const rows = document.querySelectorAll("#invoiceBody tr");
-  const data = Array.from(rows).map((row) => {
-    const inputs = row.querySelectorAll("input");
-    return {
-      name: inputs[0].value,
-      material: inputs[1].value,
-      price: parseFloat(inputs[2].value) || 0,
-    };
-  });
-  const blob = new Blob([JSON.stringify(data, null, 2)], {
-    type: "application/json",
-  });
-  const url = URL.createObjectURL(blob);
-  const a = document.createElement("a");
-  a.href = url;
-  a.download = "invoice.json";
-  a.click();
-  URL.revokeObjectURL(url);
-}
+// 3D Preview
+document.getElementById('generate3D').addEventListener('click', () => {
+    let fileInput = document.getElementById('designFile');
+    if (!fileInput.files.length) return alert("Select a file first!");
+    let file = fileInput.files[0];
+    let formData = new FormData();
+    formData.append('design', file);
 
-// Download PDF invoice
-async function downloadPDF() {
-  const { jsPDF } = window.jspdf;
-  const doc = new jsPDF();
+    let progressBar = document.getElementById('progress');
+    progressBar.style.width = '0%';
+    progressBar.innerText = '0%';
 
-  doc.setFontSize(18);
-  doc.text("Varshith Interior Solution", 105, 20, null, null, "center");
+    fetch('/upload_design', { method: 'POST', body: formData })
+        .then(response => response.json())
+        .then(data => {
+            progressBar.style.width = '100%';
+            progressBar.innerText = '100%';
+            load3DPreview(data.file);
+        });
+});
 
-  doc.setFontSize(12);
-  doc.text("No 39 BRN Ashish Layout Anekal - 562106", 10, 285);
-  doc.text("+91 9916511599 & +91 8553608981", 150, 285);
+function load3DPreview(file) {
+    let container = document.getElementById('3dContainer');
+    container.innerHTML = '';
+    let scene = new THREE.Scene();
+    let camera = new THREE.PerspectiveCamera(75, 600/400, 0.1, 1000);
+    let renderer = new THREE.WebGLRenderer();
+    renderer.setSize(600, 400);
+    container.appendChild(renderer.domElement);
 
-  let startY = 40;
+    let geometry = new THREE.BoxGeometry();
+    let material = new THREE.MeshBasicMaterial({ color: 0x00ff00 });
+    let cube = new THREE.Mesh(geometry, material);
+    scene.add(cube);
+    camera.position.z = 5;
 
-  // Table Header
-  doc.setFont(undefined, "bold");
-  doc.text("Sl No", 10, startY);
-  doc.text("Item Name", 30, startY);
-  doc.text("Material", 90, startY);
-  doc.text("Price", 160, startY);
-  doc.setFont(undefined, "normal");
-
-  startY += 10;
-
-  // Table Content
-  let total = 0;
-  const rows = document.querySelectorAll("#invoiceBody tr");
-  rows.forEach((row, index) => {
-    const inputs = row.querySelectorAll("input");
-    const item = inputs[0].value;
-    const material = inputs[1].value;
-    const price = parseFloat(inputs[2].value) || 0;
-
-    total += price;
-
-    doc.text(`${index + 1}`, 10, startY);
-    doc.text(item, 30, startY);
-    doc.text(material, 90, startY);
-    doc.text(price.toFixed(2), 160, startY);
-    startY += 10;
-  });
-
-  // Totals
-  const gst = total * 0.18;
-  const final = total + gst;
-
-  startY += 10;
-  doc.text(`Total: ₹${total.toFixed(2)}`, 10, startY);
-  startY += 8;
-  doc.text(`GST (18%): ₹${gst.toFixed(2)}`, 10, startY);
-  startY += 8;
-  doc.text(`Final Total: ₹${final.toFixed(2)}`, 10, startY);
-
-  doc.save("Invoice.pdf");
+    function animate() {
+        requestAnimationFrame(animate);
+        cube.rotation.x += 0.01;
+        cube.rotation.y += 0.01;
+        renderer.render(scene, camera);
+    }
+    animate();
 }
