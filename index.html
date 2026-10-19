@@ -15,30 +15,33 @@
 <script>
   // Scene + Camera
   const scene = new THREE.Scene();
-  const camera = new THREE.PerspectiveCamera(75, window.innerWidth/window.innerHeight, 0.1, 1000);
-  camera.position.z = 2;
+  const camera = new THREE.PerspectiveCamera(
+    75, window.innerWidth/window.innerHeight, 0.1, 1000
+  );
+  camera.position.z = 3;
 
   const renderer = new THREE.WebGLRenderer();
   renderer.setSize(window.innerWidth, window.innerHeight);
   document.body.appendChild(renderer.domElement);
 
-  // Load textures
+  // Load textures (make sure Test.jpg and Test_depth.png are in the same folder as index.html)
   const loader = new THREE.TextureLoader();
-  const colorTexture = loader.load("Test.jpg");
-  const depthTexture = loader.load("Test_depth.png");
+  const colorTexture = loader.load("./Test.jpg");
+  const depthTexture = loader.load("./Test_depth.png");
 
   // Plane with displacement
-  const geometry = new THREE.PlaneGeometry(2, 1.5, 256, 256);
+  const geometry = new THREE.PlaneGeometry(4, 3, 256, 256);
   const material = new THREE.MeshStandardMaterial({
     map: colorTexture,
     displacementMap: depthTexture,
-    displacementScale: 0.3,
+    displacementScale: 0.5, // increase for stronger 3D effect
   });
 
   const plane = new THREE.Mesh(geometry, material);
   scene.add(plane);
 
   // Lighting
+  scene.add(new THREE.AmbientLight(0xffffff, 0.6)); // soft global light
   const light = new THREE.PointLight(0xffffff, 1);
   light.position.set(2, 2, 2);
   scene.add(light);
@@ -54,7 +57,7 @@
   animate();
 
   // Resize
-  window.addEventListener('resize', () => {
+  window.addEventListener("resize", () => {
     camera.aspect = window.innerWidth / window.innerHeight;
     camera.updateProjectionMatrix();
     renderer.setSize(window.innerWidth, window.innerHeight);
