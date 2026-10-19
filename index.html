@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8">
-  <title>Parallax 3D Effect</title>
+  <title>Stronger Parallax 3D Effect</title>
   <style>
     body { margin: 0; overflow: hidden; }
     canvas { display: block; }
@@ -13,7 +13,7 @@
 
 <script>
   const scene = new THREE.Scene();
-  const camera = new THREE.OrthographicCamera(-1, 1, 1, -1, 0.1, 10);
+  const camera = new THREE.OrthographicCamera(-2, 2, 1.5, -1.5, 0.1, 10);
   camera.position.z = 1;
 
   const renderer = new THREE.WebGLRenderer({ antialias: true });
@@ -24,7 +24,7 @@
   const colorTexture = loader.load("./public/Test.jpg", () => console.log("✅ Color loaded"));
   const depthTexture = loader.load("./public/Test_depth.png", () => console.log("✅ Depth loaded"));
 
-  // Shader material for parallax effect
+  // Shader material for stronger parallax effect
   const material = new THREE.ShaderMaterial({
     uniforms: {
       uColor: { value: colorTexture },
@@ -45,14 +45,14 @@
       varying vec2 vUv;
       void main() {
         float depth = texture2D(uDepth, vUv).r;
-        vec2 offset = (uMouse - 0.5) * 0.1 * depth;
-        vec2 uv = vUv + offset;
+        vec2 offset = (uMouse - 0.5) * 0.25 * depth; // stronger offset
+        vec2 uv = clamp(vUv + offset, 0.0, 1.0);     // clamp to avoid distortion
         gl_FragColor = texture2D(uColor, uv);
       }
     `
   });
 
-  const geometry = new THREE.PlaneGeometry(2, 1.5);
+  const geometry = new THREE.PlaneGeometry(4, 3); // larger plane
   const plane = new THREE.Mesh(geometry, material);
   scene.add(plane);
 
