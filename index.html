@@ -2,54 +2,38 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8">
-  <title>3D Image Test</title>
+  <title>Image Test</title>
   <style>
-    body { margin: 0; overflow: hidden; }
+    body { margin: 0; }
     canvas { display: block; }
   </style>
 </head>
 <body>
 <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/build/three.min.js"></script>
-
 <script>
-  // Scene + Camera
   const scene = new THREE.Scene();
-  const camera = new THREE.PerspectiveCamera(
-    75, window.innerWidth / window.innerHeight, 0.1, 1000
-  );
+  const camera = new THREE.PerspectiveCamera(75, window.innerWidth/window.innerHeight, 0.1, 1000);
   camera.position.z = 3;
 
-  const renderer = new THREE.WebGLRenderer({ antialias: true });
+  const renderer = new THREE.WebGLRenderer();
   renderer.setSize(window.innerWidth, window.innerHeight);
+  renderer.setClearColor(0x333333);
   document.body.appendChild(renderer.domElement);
 
-  // Load texture (your photo)
   const loader = new THREE.TextureLoader();
-  const colorTexture = loader.load("./Test.jpg",
-    () => console.log("✅ Image loaded"),
-    undefined,
-    (err) => console.error("❌ Failed to load image", err)
-  );
+  loader.load("./Test.jpg", (texture) => {
+    const geometry = new THREE.PlaneGeometry(4, 3);
+    const material = new THREE.MeshBasicMaterial({ map: texture });
+    const plane = new THREE.Mesh(geometry, material);
+    scene.add(plane);
 
-  // Plane with just the photo
-  const geometry = new THREE.PlaneGeometry(4, 3);
-  const material = new THREE.MeshBasicMaterial({ map: colorTexture });
-  const plane = new THREE.Mesh(geometry, material);
-  scene.add(plane);
+    animate();
+  }, undefined, (err) => console.error("❌ Failed to load image", err));
 
-  // Animation loop
   function animate() {
     requestAnimationFrame(animate);
     renderer.render(scene, camera);
   }
-  animate();
-
-  // Resize handling
-  window.addEventListener("resize", () => {
-    camera.aspect = window.innerWidth / window.innerHeight;
-    camera.updateProjectionMatrix();
-    renderer.setSize(window.innerWidth, window.innerHeight);
-  });
 </script>
 </body>
 </html>
