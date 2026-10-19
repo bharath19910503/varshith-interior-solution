@@ -1,0 +1,20 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Auto Interior Design</title>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/controls/OrbitControls.js"></script>
+</head>
+<body>
+  <h2>Interior Design Generator</h2>
+  <form onsubmit="generateDesign(); return false;">
+    Height: <input type="number" id="height" value="10"><br>
+    Width: <input type="number" id="width" value="15"><br>
+    Length: <input type="number" id="length" value="20"><br>
+    <button type="submit">Generate 3D Design</button>
+  </form>
+  <div id="canvas"></div>
+  <script src="script.js"></script>
+</body>
+</html>
