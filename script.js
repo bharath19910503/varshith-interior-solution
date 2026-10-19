@@ -2,6 +2,7 @@ function generateDesign() {
   let h = parseFloat(document.getElementById("height").value) || 10;
   let w = parseFloat(document.getElementById("width").value) || 10;
   let l = parseFloat(document.getElementById("length").value) || 10;
+  let roomType = document.getElementById("room").value;
 
   document.getElementById("canvas").innerHTML = "";
 
@@ -20,30 +21,17 @@ function generateDesign() {
 
   // Room box
   const roomGeometry = new THREE.BoxGeometry(w, h, l);
-  const roomMaterial = new THREE.MeshPhongMaterial({color: 0xf0f0f0, side: THREE.BackSide});
+  const roomMaterial = new THREE.MeshPhongMaterial({color: 0x222222, side: THREE.BackSide});
   const room = new THREE.Mesh(roomGeometry, roomMaterial);
   scene.add(room);
 
-  // --- Decision Logic ---
-  // Kitchen: straight if width < length, L-shaped if width >= length
-  if (w < l) {
+  // Decide which furniture to generate based on dropdown
+  if (roomType === "kitchen") {
     createStraightKitchen(scene, w, h, l);
-  } else {
-    createLShapedKitchen(scene, w, h, l);
-  }
-
-  // Bedroom: single bed if width < 12, double bed otherwise
-  if (w < 12) {
-    createSingleBed(scene, w, h, l);
-  } else {
-    createDoubleBed(scene, w, h, l);
-  }
-
-  // TV Unit: wall-mounted if height > 8, stand otherwise
-  if (h > 8) {
+  } else if (roomType === "tv") {
     createWallTV(scene, w, h, l);
-  } else {
-    createStandTV(scene, w, h, l);
+  } else if (roomType === "bedroom") {
+    createDoubleBed(scene, w, h, l);
   }
 
   camera.position.z = Math.max(w, l) * 1.2;
@@ -65,24 +53,6 @@ function createStraightKitchen(scene, w, h, l) {
   scene.add(kitchen);
 }
 
-function createLShapedKitchen(scene, w, h, l) {
-  const mat = new THREE.MeshPhongMaterial({color: 0xffcc99});
-  const part1 = new THREE.Mesh(new THREE.BoxGeometry(w/3, h/4, l/10), mat);
-  part1.position.set(-w/4, -h/2 + h/8, -l/2 + l/10);
-  scene.add(part1);
-
-  const part2 = new THREE.Mesh(new THREE.BoxGeometry(w/10, h/4, l/3), mat);
-  part2.position.set(-w/2 + w/10, -h/2 + h/8, -l/4);
-  scene.add(part2);
-}
-
-function createSingleBed(scene, w, h, l) {
-  const mat = new THREE.MeshPhongMaterial({color: 0x9999ff});
-  const bed = new THREE.Mesh(new THREE.BoxGeometry(w/5, h/12, l/5), mat);
-  bed.position.set(w/4, -h/2 + h/24, -l/4);
-  scene.add(bed);
-}
-
 function createDoubleBed(scene, w, h, l) {
   const mat = new THREE.MeshPhongMaterial({color: 0x9999ff});
   const bed = new THREE.Mesh(new THREE.BoxGeometry(w/3, h/12, l/3), mat);
@@ -97,15 +67,5 @@ function createDoubleBed(scene, w, h, l) {
 function createWallTV(scene, w, h, l) {
   const tv = new THREE.Mesh(new THREE.BoxGeometry(w/6, h/6, 0.2), new THREE.MeshPhongMaterial({color: 0x000000}));
   tv.position.set(0, 0, l/2 - 0.2);
-  scene.add(tv);
-}
-
-function createStandTV(scene, w, h, l) {
-  const stand = new THREE.Mesh(new THREE.BoxGeometry(w/8, h/12, l/20), new THREE.MeshPhongMaterial({color: 0x333333}));
-  stand.position.set(0, -h/2 + h/24, l/4);
-  scene.add(stand);
-
-  const tv = new THREE.Mesh(new THREE.BoxGeometry(w/8, h/8, 0.2), new THREE.MeshPhongMaterial({color: 0x000000}));
-  tv.position.set(0, -h/2 + h/6, l/4);
   scene.add(tv);
 }
