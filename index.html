@@ -2,18 +2,65 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8">
-  <title>Auto Interior Design</title>
+  <title>Varshith Interior Solutions</title>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/controls/OrbitControls.js"></script>
+  <style>
+    body {
+      margin: 0;
+      font-family: Arial, sans-serif;
+      background-color: #111; /* Dark background */
+      color: gold; /* Elegant gold text */
+      text-align: center;
+    }
+    header {
+      background-color: #000;
+      padding: 20px;
+    }
+    header img {
+      height: 80px;
+    }
+    h1 {
+      margin: 10px 0;
+      font-size: 28px;
+      color: gold;
+    }
+    #canvas {
+      margin-top: 20px;
+    }
+    select, button {
+      margin: 10px;
+      padding: 8px;
+      font-size: 16px;
+      background: #222;
+      color: gold;
+      border: 1px solid gold;
+      border-radius: 4px;
+    }
+  </style>
 </head>
 <body>
-  <h2>Interior Design Generator</h2>
+  <!-- Logo and Company Name -->
+  <header>
+    <img src="logo.png" alt="Varshith Interior Solutions Logo"> <!-- Replace with your uploaded logo file -->
+    <h1>VARSHITH INTERIOR SOLUTIONS</h1>
+    <p>Shape Your Future Space</p>
+  </header>
+
+  <!-- Dropdown for room selection -->
   <form onsubmit="generateDesign(); return false;">
+    <label for="room">Select Room:</label>
+    <select id="room">
+      <option value="kitchen">Kitchen</option>
+      <option value="tv">TV Unit</option>
+      <option value="bedroom">Bedroom</option>
+    </select><br>
     Height: <input type="number" id="height" value="10"><br>
     Width: <input type="number" id="width" value="15"><br>
     Length: <input type="number" id="length" value="20"><br>
     <button type="submit">Generate 3D Design</button>
   </form>
+
   <div id="canvas"></div>
   <script src="script.js"></script>
 </body>
